@@ -1,0 +1,112 @@
+== s1. popup 방식 중 1 ==
+
+// 단순 열고 닫기,포커스 기능 팝업
+layerOpen : {
+		layerAnchor : '.d_modal_open',
+		layerClose : '.d_modal_close',
+		init : function(){
+			var _this = this;
+
+			_this.event();
+		},
+		event : function($id){
+			var _this = this;
+			var $target;
+
+			$(_this.layerAnchor).on('click',function(){
+				$target = $(this);
+				var $ariaExp = $(this).attr('aria-controls');
+				var $id = $('#' + $ariaExp);
+
+				_this.open($id)
+			})
+
+			$(_this.layerClose).on('click',function(){
+				var $id = $(this).parents('.modal_wrap').attr('id');
+				_this.close($id,$target);
+			})
+
+			$('.btn_modal_close').on('keydown',function(e){
+				_this.focus(e);
+			})
+		},
+		open : function($id){
+			var $id = $id;
+			var layerBtn = $(this.layerAnchor)[0];
+
+			$('body').addClass('fixed');
+			$($id).addClass('on').attr('tabIndex',0).focus();
+			setAriaHidden($($id));
+
+			// 비활성 처리 함수 선언
+			function setAriaHidden (dialog) {
+				var ommits = 'script, meta, link, style, base';
+
+				dialog.attr('aria-hidden', 'false');
+				dialog.siblings().not(ommits).attr('aria-hidden', 'true');
+			}
+
+			// 카드템플릿 모달 띄웠을때 리사이징 
+			if ($($id).find('.card_temp_slide').length) {
+				$($id).find('[data-type="cardTemp"] .slick_slide').resize().slick('refresh');
+				$($id).find('.slick_nav').slick('init');  //[06-18 수정]
+			}
+		},
+		close : function($id,el){
+			var $el = el;
+			var $id = '#'+$id;
+			
+			if(!$el) {
+				if(!returnFocusElem){
+					$el = $("#" + $($id).attr("data-focus-return"));
+				}else{
+					$el = returnFocusElem;
+				}
+			}
+
+			$('body').removeClass('fixed');
+			if($($id).find('.box_tab_menu').length){
+				$($id).find('.box_tab_menu .tab_menu li').eq(0).find('a').trigger('click');
+			}
+
+			// 레이어팝업 내 영상 존재시
+			if($($id).find('iframe').length){
+				// 영상 Youtube
+				var target = $($id).find('iframe');
+				var targetSrc = target.attr('src');
+				if(targetSrc.indexOf('youtube') > 0){
+					target.attr('src','');
+					target.attr('src',targetSrc);
+				};
+			}else if($($id).find('video').length){
+				// 영상 video
+				var target = $($id).find('video');
+				target.get(0).pause();
+				target.get(0).currentTime = 0;
+			};
+
+			$($id).removeClass('on').find('.box_tab_menu .tab_menu li > a').removeAttr('tabindex');
+			$el ? $el.focus() : '';
+			unsetAriaHidden($($id));
+			returnFocusElem = null;
+
+			// 비활성화 처리 해제 함수 선언
+			function unsetAriaHidden (dialog) {
+				var ommits = 'script, meta, link, style, base';
+
+				dialog.removeAttr('aria-hidden');
+				dialog.siblings().not(ommits).removeAttr('aria-hidden');
+			}
+		},
+		focus : function( e){
+			if(!e.shiftKey && e.keyCode === 9){
+				$('.modal_inner').focus();
+			}
+		}
+	},
+	
+==
+오픈 버튼 생성 예시
+
+ <a href="#none" class="btn d_modal_open" aria-controls="layer_FO_SE_0301" onclick="return false;" title="초고층 빌딩 상세보기"></a>
+ : 태그는 상관 없.
